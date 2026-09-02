@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Mafia</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ENTRY SCREEN -->
+  <section id="screen-entry" class="screen active">
+    <h1>🕵️ Mafia</h1>
+    <input id="nameInput" placeholder="Ismingiz" maxlength="16" />
+    <button id="btnCreate" class="btn primary">Xona yaratish</button>
+    <div class="or">yoki</div>
+    <input id="roomCodeInput" placeholder="Xona kodi" maxlength="6" style="text-transform:uppercase" />
+    <button id="btnJoin" class="btn secondary">Xonaga qo'shilish</button>
+    <p id="entryError" class="error"></p>
+  </section>
+
+  <!-- LOBBY SCREEN -->
+  <section id="screen-lobby" class="screen">
+    <h2>Xona: <span id="lobbyRoomId"></span></h2>
+    <p class="hint">Do'stlaringizga kod yoki linkni yuboring</p>
+    <button id="btnShare" class="btn secondary">🔗 Linkni ulashish</button>
+    <div id="lobbyPlayers" class="player-grid"></div>
+    <p id="lobbyStatus" class="hint"></p>
+    <button id="btnStart" class="btn primary" style="display:none">O'yinni boshlash</button>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="screen-game" class="screen">
+    <div class="topbar">
+      <span id="phaseLabel" class="phase-badge"></span>
+      <span id="timerLabel" class="timer">--</span>
+    </div>
+    <div id="roleCard" class="role-card"></div>
+    <div id="gameLog" class="log"></div>
+
+    <div id="targetArea" class="target-area"></div>
+
+    <div id="chatBox" class="chat-box"></div>
+    <div class="chat-input-row">
+      <input id="chatInput" placeholder="Xabar yozing..." maxlength="200" />
+      <button id="btnSendChat" class="btn small">➤</button>
+    </div>
+  </section>
+
+  <!-- RESULT/GAMEOVER SCREEN -->
+  <section id="screen-over" class="screen">
+    <h2 id="overTitle"></h2>
+    <div id="overList" class="player-grid"></div>
+    <button id="btnRestart" class="btn primary">Bosh sahifaga</button>
+  </section>
+
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "mafia-telegram",
+  "version": "1.0.0",
+  "description": "10 kishilik Mafia multiplayer o'yini - Telegram Mini App",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "nanoid": "^3.3.7"
+  }
+}

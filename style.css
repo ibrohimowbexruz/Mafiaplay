@@ -1,0 +1,111 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, system-ui, sans-serif;
+  background: var(--tg-theme-bg-color, #0f0f14);
+  color: var(--tg-theme-text-color, #f0f0f0);
+  min-height: 100vh;
+}
+#app { max-width: 480px; margin: 0 auto; padding: 16px; }
+.screen { display: none; }
+.screen.active { display: block; animation: fade .2s ease; }
+@keyframes fade { from { opacity:0 } to { opacity:1 } }
+
+h1 { text-align:center; font-size: 28px; margin: 24px 0; }
+h2 { font-size: 20px; }
+
+input {
+  width: 100%;
+  padding: 12px 14px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1a1a22;
+  color: #fff;
+  font-size: 16px;
+}
+
+.btn {
+  width: 100%;
+  padding: 13px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn.primary { background: var(--tg-theme-button-color, #dc3545); color: var(--tg-theme-button-text-color, #fff); }
+.btn.secondary { background: #2a2a35; color: #fff; }
+.btn.small { width: auto; padding: 10px 16px; }
+.or { text-align:center; opacity:.5; margin: 12px 0; font-size: 13px; }
+.error { color: #ff5f5f; text-align:center; min-height: 20px; }
+.hint { opacity: .6; font-size: 14px; text-align:center; }
+
+.player-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 16px 0;
+}
+.player-chip {
+  padding: 10px;
+  background: #1a1a22;
+  border-radius: 10px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.player-chip.dead { opacity: .35; text-decoration: line-through; cursor: default; }
+.player-chip.selected { border-color: #dc3545; }
+.player-chip.host::after { content: "👑"; }
+
+.topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
+.phase-badge { padding: 6px 12px; border-radius: 20px; background: #2a2a35; font-size: 13px; font-weight:600; }
+.timer { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.role-card {
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1a1a22, #26262f);
+  text-align: center;
+  margin-bottom: 12px;
+}
+.role-card .role-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.role-card .role-desc { font-size: 13px; opacity: .7; }
+
+.log {
+  max-height: 90px;
+  overflow-y: auto;
+  font-size: 13px;
+  opacity: .8;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #1a1a22;
+  border-radius: 10px;
+}
+
+.target-area { margin-bottom: 12px; }
+.target-area .action-label { font-size: 13px; opacity: .7; margin-bottom: 6px; }
+
+.chat-box {
+  height: 200px;
+  overflow-y: auto;
+  background: #1a1a22;
+  border-radius: 10px;
+  padding: 8px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.chat-msg { margin: 4px 0; }
+.chat-msg .name { font-weight: 600; color: #dc3545; }
+.chat-msg.mafia .name { color: #ff8800; }
+.chat-msg.dead .name { color: #888; }
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input-row input { flex: 1; margin: 0; }
+
+#screen-over { text-align: center; }
+#overTitle { font-size: 24px; margin: 20px 0; }
