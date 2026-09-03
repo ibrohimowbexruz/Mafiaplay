@@ -62,6 +62,11 @@ input {
 .player-chip.dead { opacity: .35; text-decoration: line-through; cursor: default; }
 .player-chip.selected { border-color: #dc3545; }
 .player-chip.host::after { content: "👑"; }
+.player-chip.bot { border: 1px solid #3a3a45; }
+.player-chip.bot::before { content: "🤖 "; }
+
+.bot-controls { display: flex; gap: 8px; margin: 4px 0; }
+.bot-controls .btn { flex: 1; margin: 0; padding: 10px; font-size: 14px; }
 
 .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
 .phase-badge { padding: 6px 12px; border-radius: 20px; background: #2a2a35; font-size: 13px; font-weight:600; }
