@@ -13,6 +13,24 @@ const ROLE_INFO = {
   civilian: { emoji: '👤', name: 'Tinch aholi', desc: "Kunduzi muhokama va ovoz berish orqali mafiani toping." },
 };
 
+const NIGHT_FACTS = [
+  "Bilasizmi? Ma'lumki, oktopuslarning uchta yuragi bor.",
+  "Bilasizmi? Bol hech qachon buzilmaydi — minglab yillar saqlanishi mumkin.",
+  "Bilasizmi? Bananlar botanik jihatdan rezavorlar hisoblanadi.",
+  "Bilasizmi? Insonning yuragi kuniga taxminan 100 000 marta uradi.",
+  "Bilasizmi? Eng katta sut emizuvchi — ko'k kit, tili bir filcha og'irlikda.",
+  "Bilasizmi? Ayrim toshbaqalar 150 yildan ortiq yashaydi.",
+  "Bilasizmi? Yer sayyorasining 70% dan ortig'i suv bilan qoplangan.",
+  "Bilasizmi? Chaqmoq quyoshdan 5 barobar issiqroq bo'lishi mumkin.",
+  "Bilasizmi? Odam miyasi tanadagi energiyaning taxminan 20% ini sarflaydi.",
+  "Bilasizmi? Ari asalari o'z tilida raqsga tushib, ma'lumot uzatadi.",
+  "Bilasizmi? Venera Yerdan issiqroq sayyora — qo'rg'oshinni eritadigan haroratda.",
+  "Bilasizmi? Dunyoda eng ko'p gapiriladigan til — Mandarin xitoy tili.",
+  "Bilasizmi? Momiq bulutlarning og'irligi million tonnaga yetishi mumkin.",
+  "Bilasizmi? Muzlik davri paytida mamontlar Misrda piramidalar qurilganda hali yashagan.",
+  "Bilasizmi? Inson terisi har 27 kunda to'liq yangilanadi.",
+];
+
 function show(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
@@ -85,6 +103,9 @@ function escapeHtml(s) {
 // ---------- STATE RENDER ----------
 socket.on('connect', () => { myId = socket.id; });
 
+let rosterShownForRound = 0;
+let currentFact = '';
+
 socket.on('state', (state) => {
   currentState = state;
 
@@ -95,10 +116,26 @@ socket.on('state', (state) => {
   } else if (state.phase === 'ended') {
     // gameOver event handles this screen
   } else {
-    show('screen-game');
-    renderGame(state);
+    if (state.round === 1 && rosterShownForRound !== 1 && document.getElementById('screen-roster').classList.contains('active') === false && document.getElementById('screen-game').classList.contains('active') === false) {
+      rosterShownForRound = 1;
+      showRosterThenGame(state);
+    } else {
+      show('screen-game');
+      renderGame(state);
+    }
   }
 });
+
+function showRosterThenGame(state) {
+  show('screen-roster');
+  el('rosterList').innerHTML = state.players.map(p =>
+    `<div class="player-chip ${p.isBot ? 'bot' : ''}">${escapeHtml(p.name)}</div>`
+  ).join('');
+  setTimeout(() => {
+    show('screen-game');
+    renderGame(state);
+  }, 4000);
+}
 
 function renderLobbyPlayers(state) {
   el('lobbyPlayers').innerHTML = state.players.map(p =>
@@ -116,16 +153,33 @@ const PHASE_LABELS = {
 
 function renderGame(state) {
   el('phaseLabel').textContent = PHASE_LABELS[state.phase] || state.phase;
+  el('phaseLabel').className = 'phase-badge phase-' + state.phase;
   el('timerLabel').textContent = state.timeLeft > 0 ? `${state.timeLeft}s` : '';
+  el('timerLabel').classList.toggle('low', state.timeLeft > 0 && state.timeLeft <= 10);
 
   const role = ROLE_INFO[state.myRole];
+  const roleCard = el('roleCard');
+  roleCard.className = 'role-card' + (state.myRole ? ' role-' + state.myRole : '');
   if (role) {
     let extra = '';
     if (state.myRole === 'mafia' && state.mafiaTeam) {
       extra = `<div class="role-desc">Sherikaringiz: ${state.mafiaTeam.map(p => escapeHtml(p.name)).join(', ')}</div>`;
     }
-    el('roleCard').innerHTML = `<div class="role-name">${role.emoji} ${role.name}</div><div class="role-desc">${role.desc}</div>${extra}` +
+    roleCard.innerHTML = `<div class="role-name">${role.emoji} ${role.name}</div><div class="role-desc">${role.desc}</div>${extra}` +
       (!state.myAlive ? '<div class="role-desc" style="color:#ff5f5f">💀 Siz o\'ldingiz — endi kuzatuvchisiz</div>' : '');
+  }
+
+  // Tunda oddiy o'yinchilar uchun chat o'rniga fakt ko'rsatiladi
+  const isMafiaAtNight = state.phase === 'night' && state.myRole === 'mafia';
+  const showNightFact = state.phase === 'night' && !isMafiaAtNight;
+  el('nightFact').style.display = showNightFact ? 'block' : 'none';
+  el('chatWrap').style.display = showNightFact ? 'none' : 'block';
+  if (showNightFact) {
+    if (!currentFact || state._factRound !== state.round) {
+      currentFact = NIGHT_FACTS[Math.floor(Math.random() * NIGHT_FACTS.length)];
+      state._factRound = state.round;
+    }
+    el('nightFact').innerHTML = `<div class="fact-label">🌙 Tun davom etmoqda...</div>${escapeHtml(currentFact)}`;
   }
 
   renderTargetArea(state);
