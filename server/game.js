@@ -50,11 +50,15 @@ class Room {
     this.addPlayer(hostId, hostName);
   }
 
-  addPlayer(id, name) {
+  addPlayer(id, name, isBot = false) {
     if (this.phase !== PHASE.LOBBY) return { error: "O'yin allaqachon boshlangan" };
     if (this.players.size >= 10) return { error: 'Xona to\'la (10/10)' };
-    this.players.set(id, { id, name, role: null, alive: true });
+    this.players.set(id, { id, name, role: null, alive: true, isBot });
     return { ok: true };
+  }
+
+  botCount() {
+    return [...this.players.values()].filter(p => p.isBot).length;
   }
 
   removePlayer(id) {
@@ -63,7 +67,7 @@ class Room {
 
   playerList() {
     return [...this.players.values()].map(p => ({
-      id: p.id, name: p.name, alive: p.alive,
+      id: p.id, name: p.name, alive: p.alive, isBot: !!p.isBot,
     }));
   }
 
