@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const { nanoid } = require('nanoid');
 const { Room, PHASE, NIGHT_SECONDS, DAY_SECONDS, VOTING_SECONDS, RESULT_SECONDS } = require('./game');
 
 const app = express();
@@ -54,12 +55,67 @@ function startTimer(room, seconds, onEnd) {
   }, 1000);
 }
 
+const BOT_NAMES = ['Aziz', 'Malika', 'Sardor', 'Nodira', 'Jasur', 'Kamola', 'Otabek', 'Zilola', 'Bekzod', 'Sitora'];
+
+function randomPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickBotName(room) {
+  const used = new Set([...room.players.values()].map(p => p.name));
+  const free = BOT_NAMES.filter(n => !used.has(n));
+  return free.length ? randomPick(free) : `Bot${Math.floor(Math.random() * 1000)}`;
+}
+
+function runBotNightActions(room) {
+  if (room.phase !== PHASE.NIGHT) return;
+  const alive = room.alivePlayers();
+  for (const p of alive) {
+    if (!p.isBot) continue;
+    const delay = 1000 + Math.random() * (NIGHT_SECONDS * 1000 * 0.5);
+    setTimeout(() => {
+      if (room.phase !== PHASE.NIGHT || !p.alive) return;
+      const others = alive.filter(x => x.id !== p.id && x.alive);
+      if (!others.length) return;
+      if (p.role === 'mafia') {
+        const targets = others.filter(x => x.role !== 'mafia');
+        if (targets.length) room.nightActions.mafiaTargetId = randomPick(targets).id;
+      } else if (p.role === 'doctor') {
+        room.nightActions.doctorSaveId = randomPick(others).id;
+      } else if (p.role === 'detective') {
+        room.nightActions.detectiveCheckId = randomPick(others).id;
+      }
+    }, delay);
+  }
+}
+
+function runBotVotes(room) {
+  if (room.phase !== PHASE.VOTING) return;
+  const alive = room.alivePlayers();
+  for (const p of alive) {
+    if (!p.isBot) continue;
+    const delay = 1000 + Math.random() * (VOTING_SECONDS * 1000 * 0.6);
+    setTimeout(() => {
+      if (room.phase !== PHASE.VOTING || !p.alive) return;
+      const others = alive.filter(x => x.id !== p.id && x.alive);
+      if (!others.length) return;
+      let pool = others;
+      if (p.role === 'mafia') {
+        const nonMafia = others.filter(x => x.role !== 'mafia');
+        if (nonMafia.length) pool = nonMafia;
+      }
+      room.votes[p.id] = randomPick(pool).id;
+    }, delay);
+  }
+}
+
 function startNight(room) {
   room.phase = PHASE.NIGHT;
   room.round++;
   room.nightActions = {};
   broadcastState(room);
   startTimer(room, NIGHT_SECONDS, () => resolveNightPhase(room));
+  runBotNightActions(room);
 }
 
 function resolveNightPhase(room) {
@@ -102,6 +158,7 @@ function startVoting(room) {
   room.votes = {};
   broadcastState(room);
   startTimer(room, VOTING_SECONDS, () => resolveVotingPhase(room));
+  runBotVotes(room);
 }
 
 function resolveVotingPhase(room) {
@@ -152,6 +209,24 @@ io.on('connection', (socket) => {
     socket.join(room.id);
     socket.roomId = room.id;
     cb({ ok: true, roomId: room.id });
+    broadcastState(room);
+  });
+
+  socket.on('addBot', () => {
+    const room = rooms.get(socket.roomId);
+    if (!room || room.hostId !== socket.id) return;
+    const botId = 'bot_' + nanoid(8);
+    const name = pickBotName(room);
+    room.addPlayer(botId, name, true);
+    broadcastState(room);
+  });
+
+  socket.on('removeBot', () => {
+    const room = rooms.get(socket.roomId);
+    if (!room || room.hostId !== socket.id || room.phase !== PHASE.LOBBY) return;
+    const bots = [...room.players.values()].filter(p => p.isBot);
+    if (!bots.length) return;
+    room.removePlayer(bots[bots.length - 1].id);
     broadcastState(room);
   });
 
