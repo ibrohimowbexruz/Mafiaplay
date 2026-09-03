@@ -56,6 +56,8 @@ el('btnShare').onclick = () => {
 };
 
 el('btnStart').onclick = () => socket.emit('startGame');
+el('btnAddBot').onclick = () => socket.emit('addBot');
+el('btnRemoveBot').onclick = () => socket.emit('removeBot');
 
 // ---------- CHAT ----------
 el('btnSendChat').onclick = sendChat;
@@ -100,11 +102,12 @@ socket.on('state', (state) => {
 
 function renderLobbyPlayers(state) {
   el('lobbyPlayers').innerHTML = state.players.map(p =>
-    `<div class="player-chip ${p.id === state.players.find(x=>x)?.id && false ? '' : ''}">${escapeHtml(p.name)}</div>`
+    `<div class="player-chip ${p.isBot ? 'bot' : ''}">${escapeHtml(p.name)}</div>`
   ).join('');
   const n = state.players.length;
   el('lobbyStatus').textContent = n < 4 ? `Kamida 4 kishi kerak (${n}/10)` : `${n}/10 kishi tayyor`;
   el('btnStart').style.display = state.isHost && n >= 4 ? 'block' : 'none';
+  el('botControls').style.display = state.isHost && n < 10 ? 'flex' : (state.isHost ? 'flex' : 'none');
 }
 
 const PHASE_LABELS = {
