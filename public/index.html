@@ -42,15 +42,24 @@
       <span id="timerLabel" class="timer">--</span>
     </div>
     <div id="roleCard" class="role-card"></div>
+    <div id="nightFact" class="night-fact" style="display:none"></div>
     <div id="gameLog" class="log"></div>
 
     <div id="targetArea" class="target-area"></div>
 
+    <div id="chatWrap">
     <div id="chatBox" class="chat-box"></div>
-    <div class="chat-input-row">
+    <div class="chat-input-row" id="chatInputRow">
       <input id="chatInput" placeholder="Xabar yozing..." maxlength="200" />
       <button id="btnSendChat" class="btn small">➤</button>
     </div>
+    </div>
+  </section>
+
+  <!-- ROSTER REVEAL OVERLAY -->
+  <section id="screen-roster" class="screen">
+    <h2 class="roster-title">👥 O'yinchilar</h2>
+    <div id="rosterList" class="player-grid"></div>
   </section>
 
   <!-- RESULT/GAMEOVER SCREEN -->
