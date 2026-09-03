@@ -7,9 +7,9 @@ const ROLE_SETUPS = {
   9:  { mafia: 2, detective: 1, doctor: 1, civilian: 5 },
   8:  { mafia: 2, detective: 1, doctor: 1, civilian: 4 },
   7:  { mafia: 2, detective: 1, doctor: 1, civilian: 3 },
-  6:  { mafia: 2, detective: 1, doctor: 0, civilian: 3 },
+  6:  { mafia: 2, detective: 1, doctor: 1, civilian: 2 },
   5:  { mafia: 1, detective: 1, doctor: 1, civilian: 2 },
-  4:  { mafia: 1, detective: 1, doctor: 0, civilian: 2 },
+  4:  { mafia: 1, detective: 0, doctor: 1, civilian: 2 },
 };
 
 const PHASE = {
@@ -22,7 +22,7 @@ const PHASE = {
 };
 
 const NIGHT_SECONDS = 45;
-const DAY_SECONDS = 90;
+const DAY_SECONDS = 50;
 const VOTING_SECONDS = 30;
 const RESULT_SECONDS = 8;
 
