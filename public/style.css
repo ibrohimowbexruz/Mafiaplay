@@ -69,16 +69,47 @@ input {
 .bot-controls .btn { flex: 1; margin: 0; padding: 10px; font-size: 14px; }
 
 .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
-.phase-badge { padding: 6px 12px; border-radius: 20px; background: #2a2a35; font-size: 13px; font-weight:600; }
-.timer { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.phase-badge {
+  padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight:700;
+  transition: background .4s ease, color .4s ease;
+}
+.phase-badge.phase-night { background: linear-gradient(135deg,#1b1b3a,#2d2d5c); color:#a8b4ff; }
+.phase-badge.phase-day { background: linear-gradient(135deg,#4a3a12,#8a6a1e); color:#ffe9a8; }
+.phase-badge.phase-voting { background: linear-gradient(135deg,#4a1212,#8a1e1e); color:#ffb3b3; }
+.phase-badge.phase-result { background: linear-gradient(135deg,#12324a,#1e5c8a); color:#a8dbff; }
+
+.timer { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.timer.low { color: #ff5f5f; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
 
 .role-card {
   padding: 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #1a1a22, #26262f);
   text-align: center;
   margin-bottom: 12px;
+  transition: background .4s ease;
 }
+.role-card.role-mafia { background: linear-gradient(135deg,#3a1414,#5c1e1e); }
+.role-card.role-doctor { background: linear-gradient(135deg,#123a2a,#1e5c42); }
+.role-card.role-detective { background: linear-gradient(135deg,#12244a,#1e3a8a); }
+.role-card.role-civilian { background: linear-gradient(135deg,#1a1a22,#26262f); }
+
+.night-fact {
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,#1b1b3a,#26264f);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  border: 1px solid #33335f;
+}
+.night-fact .fact-label { font-size: 12px; opacity: .6; margin-bottom: 4px; }
+
+#screen-roster { text-align: center; }
+.roster-title { margin: 30px 0 16px; font-size: 22px; animation: fadeUp .4s ease; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(10px);} to { opacity:1; transform: translateY(0);} }
+#screen-roster .player-chip { animation: fadeUp .4s ease; }
+
 .role-card .role-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
 .role-card .role-desc { font-size: 13px; opacity: .7; }
 
