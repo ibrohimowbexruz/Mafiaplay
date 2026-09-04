@@ -5,7 +5,12 @@ body {
   background: var(--tg-theme-bg-color, #0f0f14);
   color: var(--tg-theme-text-color, #f0f0f0);
   min-height: 100vh;
+  transition: background 1.2s ease;
 }
+body.bg-mafia { background: radial-gradient(circle at 50% 0%, #3a0f0f, #0f0f14 70%); }
+body.bg-doctor { background: radial-gradient(circle at 50% 0%, #0f3a22, #0f0f14 70%); }
+body.bg-detective { background: radial-gradient(circle at 50% 0%, #0f1e3a, #0f0f14 70%); }
+body.bg-civilian { background: radial-gradient(circle at 50% 0%, #22222e, #0f0f14 70%); }
 #app { max-width: 480px; margin: 0 auto; padding: 16px; }
 .screen { display: none; }
 .screen.active { display: block; animation: fade .2s ease; }
@@ -94,6 +99,17 @@ input {
 .role-card.role-detective { background: linear-gradient(135deg,#12244a,#1e3a8a); }
 .role-card.role-civilian { background: linear-gradient(135deg,#1a1a22,#26262f); }
 
+.role-icon-circle {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 8px;
+}
+.role-icon-dagger { background: radial-gradient(circle, #b91c1c, #7f1010); box-shadow: 0 0 14px #b91c1c88; }
+.role-icon-syringe { background: radial-gradient(circle, #16a34a, #0f6b30); box-shadow: 0 0 14px #16a34a88; }
+.role-icon-magnifier { background: radial-gradient(circle, #2563eb, #17408f); box-shadow: 0 0 14px #2563eb88; }
+.role-icon-person { background: radial-gradient(circle, #52525b, #33333c); box-shadow: 0 0 14px #52525b66; }
+
 .night-fact {
   padding: 14px;
   border-radius: 12px;
@@ -140,6 +156,8 @@ input {
 .chat-msg .name { font-weight: 600; color: #dc3545; }
 .chat-msg.mafia .name { color: #ff8800; }
 .chat-msg.dead .name { color: #888; }
+.chat-msg.system { text-align: center; font-size: 12px; opacity: .75; }
+.chat-msg.system .sys-text { background: #22222e; padding: 3px 10px; border-radius: 10px; }
 .chat-input-row { display: flex; gap: 8px; }
 .chat-input-row input { flex: 1; margin: 0; }
 
