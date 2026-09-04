@@ -104,6 +104,23 @@ class Room {
     return [...this.players.values()].filter(p => p.alive && (role ? p.role === role : true)).length;
   }
 
+  nightActionsComplete() {
+    const mafiaAlive = this.aliveCount('mafia');
+    const doctorAlive = this.aliveCount('doctor');
+    const detectiveAlive = this.aliveCount('detective');
+    const { mafiaTargetId, doctorSaveId, detectiveCheckId } = this.nightActions;
+    if (mafiaAlive > 0 && !mafiaTargetId) return false;
+    if (doctorAlive > 0 && !doctorSaveId) return false;
+    if (detectiveAlive > 0 && !detectiveCheckId) return false;
+    return true;
+  }
+
+  votingComplete() {
+    const aliveCount = this.alivePlayers().length;
+    const voteCount = Object.keys(this.votes).length;
+    return voteCount >= aliveCount && aliveCount > 0;
+  }
+
   checkWinner() {
     const mafiaAlive = this.aliveCount('mafia');
     const totalAlive = this.aliveCount();
