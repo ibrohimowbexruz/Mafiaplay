@@ -41,6 +41,22 @@ function clearTimer(room) {
   room.timer = null;
 }
 
+function maybeEndNightEarly(room) {
+  if (room.phase !== PHASE.NIGHT) return;
+  if (room.nightActionsComplete()) {
+    clearTimer(room);
+    resolveNightPhase(room);
+  }
+}
+
+function maybeEndVotingEarly(room) {
+  if (room.phase !== PHASE.VOTING) return;
+  if (room.votingComplete()) {
+    clearTimer(room);
+    resolveVotingPhase(room);
+  }
+}
+
 function startTimer(room, seconds, onEnd) {
   clearTimer(room);
   room.timeLeft = seconds;
@@ -55,16 +71,17 @@ function startTimer(room, seconds, onEnd) {
   }, 1000);
 }
 
-const BOT_NAMES = ['Aziz', 'Malika', 'Sardor', 'Nodira', 'Jasur', 'Kamola', 'Otabek', 'Zilola', 'Bekzod', 'Sitora'];
+const BOT_PREFIX = 'Bot';
 
 function randomPick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function pickBotName(room) {
+  let n = 1;
   const used = new Set([...room.players.values()].map(p => p.name));
-  const free = BOT_NAMES.filter(n => !used.has(n));
-  return free.length ? randomPick(free) : `Bot${Math.floor(Math.random() * 1000)}`;
+  while (used.has(BOT_PREFIX + n)) n++;
+  return BOT_PREFIX + n;
 }
 
 function runBotNightActions(room) {
@@ -85,6 +102,7 @@ function runBotNightActions(room) {
       } else if (p.role === 'detective') {
         room.nightActions.detectiveCheckId = randomPick(others).id;
       }
+      maybeEndNightEarly(room);
     }, delay);
   }
 }
@@ -104,7 +122,10 @@ function runBotVotes(room) {
         const nonMafia = others.filter(x => x.role !== 'mafia');
         if (nonMafia.length) pool = nonMafia;
       }
-      room.votes[p.id] = randomPick(pool).id;
+      const target = randomPick(pool);
+      room.votes[p.id] = target.id;
+      announceVote(room, p.id, target.id);
+      maybeEndVotingEarly(room);
     }, delay);
   }
 }
@@ -191,6 +212,17 @@ function endGame(room, winner) {
   broadcastState(room);
 }
 
+function announceVote(room, voterId, targetId) {
+  const voter = room.players.get(voterId);
+  const target = room.players.get(targetId);
+  if (!voter || !target) return;
+  io.to(room.id).emit('chatMessage', {
+    name: 'Tizim',
+    text: `${voter.name} — ${target.name}ga ovoz berdi`,
+    scope: 'system',
+  });
+}
+
 io.on('connection', (socket) => {
   socket.on('createRoom', ({ name }, cb) => {
     const room = new Room(socket.id, name || 'Host');
@@ -244,6 +276,7 @@ io.on('connection', (socket) => {
     const me = room.players.get(socket.id);
     if (!me || me.role !== 'mafia' || !me.alive) return;
     room.nightActions.mafiaTargetId = targetId;
+    maybeEndNightEarly(room);
   });
 
   socket.on('doctorSave', ({ targetId }) => {
@@ -252,6 +285,7 @@ io.on('connection', (socket) => {
     const me = room.players.get(socket.id);
     if (!me || me.role !== 'doctor' || !me.alive) return;
     room.nightActions.doctorSaveId = targetId;
+    maybeEndNightEarly(room);
   });
 
   socket.on('detectiveCheck', ({ targetId }) => {
@@ -260,6 +294,7 @@ io.on('connection', (socket) => {
     const me = room.players.get(socket.id);
     if (!me || me.role !== 'detective' || !me.alive) return;
     room.nightActions.detectiveCheckId = targetId;
+    maybeEndNightEarly(room);
   });
 
   socket.on('castVote', ({ targetId }) => {
@@ -267,7 +302,10 @@ io.on('connection', (socket) => {
     if (!room || room.phase !== PHASE.VOTING) return;
     const me = room.players.get(socket.id);
     if (!me || !me.alive) return;
+    if (room.votes[socket.id]) return; // allaqachon ovoz bergan - o'zgartira olmaydi
     room.votes[socket.id] = targetId;
+    announceVote(room, socket.id, targetId);
+    maybeEndVotingEarly(room);
   });
 
   socket.on('chatMessage', ({ text }) => {
