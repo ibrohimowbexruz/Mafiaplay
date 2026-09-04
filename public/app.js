@@ -5,12 +5,21 @@ const socket = io();
 let myId = null;
 let currentState = null;
 let selectedTarget = null;
+let hasVotedThisRound = false;
+let lastPhase = null;
 
 const ROLE_INFO = {
-  mafia: { emoji: '🔪', name: 'Mafia', desc: "Tunda birovni yo'q qilasiz. Sherikaringiz kim ekanini bilasiz." },
-  detective: { emoji: '🕵️', name: 'Komissar', desc: 'Har kecha bir kishini tekshirib, mafia ekan-emasligini bilib olasiz.' },
-  doctor: { emoji: '💉', name: 'Doktor', desc: "Har kecha bir kishini o'limdan asraysiz." },
-  civilian: { emoji: '👤', name: 'Tinch aholi', desc: "Kunduzi muhokama va ovoz berish orqali mafiani toping." },
+  mafia: { name: 'Mafia', desc: "Tunda birovni yo'q qilasiz. Sherikaringiz kim ekanini bilasiz.", icon: 'dagger' },
+  detective: { name: 'Komissar', desc: 'Har kecha bir kishini tekshirib, mafia ekan-emasligini bilib olasiz.', icon: 'magnifier' },
+  doctor: { name: 'Doktor', desc: "Har kecha bir kishini o'limdan asraysiz.", icon: 'syringe' },
+  civilian: { name: 'Tinch aholi', desc: "Kunduzi muhokama va ovoz berish orqali mafiani toping.", icon: 'person' },
+};
+
+const ROLE_ICONS = {
+  dagger: `<svg viewBox="0 0 48 48" width="30" height="30"><path d="M24 4l3 14-3 4-3-4 3-14z" fill="#fff"/><rect x="22.5" y="20" width="3" height="16" fill="#fff"/><rect x="17" y="34" width="14" height="3" rx="1.5" fill="#fff"/><rect x="22.5" y="36" width="3" height="7" fill="#fff"/></svg>`,
+  syringe: `<svg viewBox="0 0 48 48" width="30" height="30"><g fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="10" y1="38" x2="20" y2="28"/><rect x="18" y="14" width="10" height="16" rx="1.5" transform="rotate(45 23 22)"/><line x1="30" y1="10" x2="34" y2="14"/><line x1="34" y1="6" x2="38" y2="10"/><line x1="26" y1="14" x2="30" y2="10"/></g></svg>`,
+  magnifier: `<svg viewBox="0 0 48 48" width="30" height="30"><g fill="none" stroke="#fff" stroke-width="2.5"><circle cx="20" cy="20" r="10"/><line x1="27" y1="27" x2="37" y2="37" stroke-linecap="round"/></g><g fill="#fff"><rect x="30" y="6" width="4" height="14" rx="1" transform="rotate(35 32 13)"/></g></svg>`,
+  person: `<svg viewBox="0 0 48 48" width="30" height="30"><circle cx="24" cy="16" r="8" fill="#fff"/><path d="M10 40c0-9 6-14 14-14s14 5 14 14" fill="#fff"/></svg>`,
 };
 
 const NIGHT_FACTS = [
@@ -90,8 +99,12 @@ function sendChat() {
 socket.on('chatMessage', ({ name, text, scope }) => {
   const box = el('chatBox');
   const div = document.createElement('div');
-  div.className = 'chat-msg ' + (scope === 'mafia' ? 'mafia' : scope === 'dead' ? 'dead' : '');
-  div.innerHTML = `<span class="name">${escapeHtml(name)}${scope === 'mafia' ? ' (mafia)' : scope === 'dead' ? ' (o\'lik)' : ''}:</span> ${escapeHtml(text)}`;
+  div.className = 'chat-msg ' + (scope === 'mafia' ? 'mafia' : scope === 'dead' ? 'dead' : scope === 'system' ? 'system' : '');
+  if (scope === 'system') {
+    div.innerHTML = `<span class="sys-text">🗳 ${escapeHtml(text)}</span>`;
+  } else {
+    div.innerHTML = `<span class="name">${escapeHtml(name)}${scope === 'mafia' ? ' (mafia)' : scope === 'dead' ? ' (o\'lik)' : ''}:</span> ${escapeHtml(text)}`;
+  }
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 });
@@ -152,6 +165,11 @@ const PHASE_LABELS = {
 };
 
 function renderGame(state) {
+  if (state.phase !== lastPhase) {
+    hasVotedThisRound = false;
+    selectedTarget = null;
+    lastPhase = state.phase;
+  }
   el('phaseLabel').textContent = PHASE_LABELS[state.phase] || state.phase;
   el('phaseLabel').className = 'phase-badge phase-' + state.phase;
   el('timerLabel').textContent = state.timeLeft > 0 ? `${state.timeLeft}s` : '';
@@ -160,12 +178,15 @@ function renderGame(state) {
   const role = ROLE_INFO[state.myRole];
   const roleCard = el('roleCard');
   roleCard.className = 'role-card' + (state.myRole ? ' role-' + state.myRole : '');
+  document.body.className = state.myRole ? 'bg-' + state.myRole : '';
   if (role) {
     let extra = '';
     if (state.myRole === 'mafia' && state.mafiaTeam) {
       extra = `<div class="role-desc">Sherikaringiz: ${state.mafiaTeam.map(p => escapeHtml(p.name)).join(', ')}</div>`;
     }
-    roleCard.innerHTML = `<div class="role-name">${role.emoji} ${role.name}</div><div class="role-desc">${role.desc}</div>${extra}` +
+    roleCard.innerHTML =
+      `<div class="role-icon-circle role-icon-${role.icon}">${ROLE_ICONS[role.icon]}</div>` +
+      `<div class="role-name">${role.name}</div><div class="role-desc">${role.desc}</div>${extra}` +
       (!state.myAlive ? '<div class="role-desc" style="color:#ff5f5f">💀 Siz o\'ldingiz — endi kuzatuvchisiz</div>' : '');
   }
 
@@ -190,7 +211,8 @@ function renderTargetArea(state) {
   area.innerHTML = '';
   if (!state.myAlive) return;
 
-  let label = null, onPick = null, alreadyPicked = false;
+  let label = null, onPick = null;
+  let lockAfterPick = false;
 
   if (state.phase === 'night') {
     if (state.myRole === 'mafia') { label = "Kimni yo'q qilamiz?"; onPick = (id) => socket.emit('mafiaTarget', { targetId: id }); }
@@ -200,6 +222,11 @@ function renderTargetArea(state) {
   } else if (state.phase === 'voting') {
     label = 'Kimga ovoz berasiz?';
     onPick = (id) => socket.emit('castVote', { targetId: id });
+    lockAfterPick = true;
+    if (hasVotedThisRound) {
+      area.innerHTML = `<div class="action-label">${label}</div><p class="hint">✅ Ovozingiz qabul qilindi, kutib turing...</p>`;
+      return;
+    }
   } else {
     return;
   }
@@ -210,14 +237,15 @@ function renderTargetArea(state) {
   grid.className = 'player-grid';
 
   state.players.forEach(p => {
-    if (p.id === myId && state.phase !== 'voting') return; // o'ziga tanlamaydi (ovozda o'ziga ham beroladi ixtiyoriy)
+    if (p.id === myId && state.phase !== 'voting') return; // o'ziga tanlamaydi
     const chip = document.createElement('div');
-    chip.className = 'player-chip' + (!p.alive ? ' dead' : '') + (selectedTarget === p.id ? ' selected' : '');
+    chip.className = 'player-chip' + (!p.alive ? ' dead' : '') + (p.isBot ? ' bot' : '') + (selectedTarget === p.id ? ' selected' : '');
     chip.textContent = p.name;
     if (p.alive) {
       chip.onclick = () => {
         selectedTarget = p.id;
         onPick(p.id);
+        if (lockAfterPick) hasVotedThisRound = true;
         renderTargetArea(state);
       };
     }
